@@ -7,20 +7,22 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-	title: "Recruitment Agency Management System",
-	description:
-		"Streamline overseas employment operations for Ethiopian recruitment agencies. Manage candidates, employers, job orders, visa workflows, and travel logistics with a secure, scalable digital platform.",
-	generator: "ProAll22 developed according to UniTech IT specifications",
-	keywords:
-		"RAMS, recruitment system, overseas employment, job placement, visa processing, agency management, Ethiopia",
-	openGraph: {
-		title: "Recruitment Agency Management System (RAMS)",
-		description:
-			"Empowering Ethiopian recruitment agencies through digital automation of candidate, employer, and visa management workflows.",
-		type: "website",
-	},
+  title: "Recruitment Agency Management System",
+  description: "Streamline overseas employment operations for Ethiopian recruitment agencies...",
+  generator: "ProAll22 developed according to UniTech IT specifications",
+  keywords: "RAMS, recruitment system, overseas employment, job placement, visa processing, agency management, Ethiopia",
+  openGraph: {
+    title: "Recruitment Agency Management System (RAMS)",
+    description: "Empowering Ethiopian recruitment agencies through digital automation of candidate, employer, and visa management workflows.",
+    type: "website",
+  },
+  // Add icons configuration
+  icons: {
+    icon: '/ted.ico',
+    shortcut: '/ted.ico',
+    apple: '/ted.ico',
+  },
 };
-
 export default function RootLayout({
 	children,
 }: Readonly<{
@@ -28,12 +30,21 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning={true}>
-			<head>
-				<meta name="theme-color" content="#133980ff" />
-				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-				{/* Favicon */}
-				<link rel="icon" href="/ted.ico" />
-			</head>
+			
+<head>
+  <meta name="theme-color" content="#133980ff" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  {/* Favicon links - multiple formats for better compatibility */}
+  <link rel="shortcut icon" href="/ted.ico" type="image/x-icon" />
+  <link rel="icon" href="/ted.ico" type="image/x-icon" />
+  <link rel="apple-touch-icon" href="/ted.ico" />
+  
+  {/* Force no caching for favicon during development */}
+  {process.env.NODE_ENV === 'development' && (
+    <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  )}
+</head>
 			<body className={`font-sans antialiased`}>{children}</body>
 		</html>
 	);

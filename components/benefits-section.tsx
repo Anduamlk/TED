@@ -11,7 +11,7 @@ interface BenefitsSectionProps {
 
 const translations = {
 	en: {
-		title: "Why Everyone Relies on RAMS",
+		title: "Why Everyone Relies on TEDBEER",
 		subtitle: "Streamlined overseas employment management for recruitment agencies",
 		stats: [
 			{ value: "50+", label: "Active Agencies" },
@@ -43,7 +43,7 @@ const translations = {
 		],
 		testimonials: [
 			{
-				quote: "RAMS has transformed how we manage overseas recruitment. We've increased our placement success rate by 40%.",
+				quote: "TEDBEER has transformed how we manage overseas recruitment. We've increased our placement success rate by 40%.",
 				author: "Ato Alemayehu Tadesse",
 				role: "Director, Elite Employment Agency",
 			},
@@ -53,7 +53,7 @@ const translations = {
 				role: "Operations Manager, Global Recruit",
 			},
 			{
-				quote: "Managing multiple destination countries is now seamless. RAMS handles compliance across all jurisdictions.",
+				quote: "Managing multiple destination countries is now seamless. TEDBEER handles compliance across all jurisdictions.",
 				author: "Ato Bereket Ashenafi",
 				role: "CEO, Horizon Recruitment",
 			},

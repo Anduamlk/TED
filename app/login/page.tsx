@@ -56,7 +56,7 @@ export default function LoginPage() {
 		setTimeout(() => {
 			setIsLoading(false);
 			if (
-				formData.email === "admin@rams.com" &&
+				formData.email === "admin@ted.com" &&
 				formData.password === "admin123"
 			) {
 				toast({
