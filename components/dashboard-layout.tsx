@@ -64,11 +64,9 @@ const navigationItems = {
     { name: "Dashboard", href: "/dashboard/admin", icon: Home },
     { name: "Users", href: "/dashboard/admin/users", icon: Users },
     { name: "Candidates", href: "/dashboard/admin/candidate", icon: User },
-    { name: "Employers", href: "/dashboard/admin/employer", icon: UserCheck },
+    { name: "Employers", href: "/dashboard/admin/employeer", icon: UserCheck },
     { name: "Agencies", href: "/dashboard/admin/agency", icon: Handshake },
-    { name: "Payments", href: "/dashboard/admin/payments", icon: CreditCard },
     { name: "Reports", href: "/dashboard/admin/reports", icon: BarChart3 },
-    { name: "Notifications", href: "/dashboard/admin/notifications", icon: Bell },
     { name: "Settings", href: "/dashboard/admin/settings", icon: Settings },
   ],
 };
@@ -141,7 +139,7 @@ export default function DashboardLayout({
 
               {/* Text Section */}
               <div>
-                <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                <span className="font-bold text-xl text-foreground mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent bg-clip-text text-transparent">
                   TEDBEER
                 </span>
                 <p className="text-xs text-gray-600 font-medium max-w-full truncate">
@@ -392,7 +390,7 @@ export default function DashboardLayout({
               {/* Breadcrumb */}
               <div className="hidden md:flex items-center space-x-2">
                 <span className="text-sm text-gray-400">/</span>
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                   {navigation.find(item => pathname.startsWith(item.href))?.name || 'Dashboard'}
                 </span>
               </div>

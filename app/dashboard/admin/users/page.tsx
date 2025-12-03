@@ -612,7 +612,7 @@ export default function UsersPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-poppins font-bold text-gray-900">
+            <h1 className="text-3xl font-poppins font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               Users Management
             </h1>
             <p className="text-gray-600 mt-1">
@@ -620,7 +620,7 @@ export default function UsersPage() {
             </p>
           </div>
           <Button 
-            className="bg-red-600 text-white hover:bg-red-700"
+            className="bg-blue-900 text-white hover:bg-blue-400"
             onClick={() => setShowUserTypeDialog(true)}
           >
             <Plus className="h-4 w-4 mr-2" />

@@ -1279,7 +1279,7 @@ const drawModernSectionHeader = (doc: jsPDF, text: string, x: number, y: number)
         <div className="animate-in fade-in duration-1000">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold bg-gray-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-2">
                 Candidate Management
               </h1>
               <p className="text-lg text-gray-600">
@@ -1292,7 +1292,7 @@ const drawModernSectionHeader = (doc: jsPDF, text: string, x: number, y: number)
             <div className="flex items-center gap-3">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button className="bg-blue-900 hover:bg-blue-600 text-white">
                     <Download className="h-4 w-4 mr-2" />
                     Export Data
                   </Button>

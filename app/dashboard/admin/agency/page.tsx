@@ -286,7 +286,7 @@ export default function AdminAgencyPage() {
         <div className="animate-in fade-in duration-1000">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold bg-gray-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-2">
                 Agency Management
               </h1>
               <p className="text-lg text-gray-600">

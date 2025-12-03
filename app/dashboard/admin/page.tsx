@@ -527,7 +527,7 @@ export default function AdminDashboard() {
         <div className="animate-in fade-in duration-1000">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-2">
+              <h1 className="text-2xl font-bold text-foreground mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-2">
                 Admin Dashboard
               </h1>
               <p className="text-sm text-gray-500">
