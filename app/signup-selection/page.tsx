@@ -10,7 +10,7 @@ import Link from "next/link"
 
 const translations = {
   en: {
-    title: "Register with RAMS Platform",
+    title: "Register with TEDBEER Platform",
     subtitle: "Select your account type to begin your recruitment journey",
     candidateTitle: "Register as Candidate",
     candidateDesc: "Search for overseas job opportunities, manage your profile, and track your visa processing status.",
@@ -46,14 +46,14 @@ export default function SignupSelectionPage() {
   const t = translations[language as keyof typeof translations] || translations.en
 
   return (
-    <main className="w-full min-h-screen flex flex-col">
+    <main className="w-full min-h-screen flex flex-col pt-35">
       <Header language={language} onLanguageChange={setLanguage} onSignupClick={() => {}} />
 
       <div className="flex-grow">
         {/* Hero Section */}
-        <section className="bg-gradient-to-b from-primary/10 to-background py-12 md:py-16">
+        <section className="bg-gradient-to-b from-primary/10 to-background py-16 md:py-16">
           <div className="max-w-7xl mx-auto px-4 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">{t.title}</h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{t.title}</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{t.subtitle}</p>
           </div>
         </section>

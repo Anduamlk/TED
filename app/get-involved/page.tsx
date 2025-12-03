@@ -11,7 +11,7 @@ import Link from "next/link"
 
 const translations = {
   en: {
-    title: "Join AFA RAMS Platform",
+    title: "Join TEDBEER Platform",
     subtitle: "Register your account and start your journey",
     candidateTitle: "Register as Candidate",
     candidateDesc: "Search and apply for overseas job opportunities. Upload your documents, track your application status, and get matched with international employers.",
@@ -43,7 +43,7 @@ const translations = {
       "Multi-country placement support",
     ],
     agencyCTA: "Register as Agency",
-    whyTitle: "Why Choose AFA RAMS?",
+    whyTitle: "Why Choose TEDBEER?",
     whyDesc: "Comprehensive solution for overseas employment management",
     security: "Secure & Compliant",
     securityDesc: "Data privacy compliant with Ethiopian regulations and international standards",
@@ -160,11 +160,11 @@ export default function GetInvolvedPage() {
     <main className="w-full">
       <Header language={language} onLanguageChange={setLanguage} onSignupClick={() => setIsSignupOpen(true)} />
 
-      <div className="min-h-screen bg-background pt-20 pb-20">
+      <div className="min-h-screen bg-background pt-35 pb-20">
         <div className="max-w-6xl mx-auto px-4">
           {/* Page Title */}
           <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">{t.title}</h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{t.title}</h1>
             <p className="text-lg text-muted-foreground">{t.subtitle}</p>
           </div>
 

@@ -136,9 +136,27 @@ export default function AdminDashboard() {
         throw new Error('Failed to fetch data');
       }
 
-      const candidates: Candidate[] = await candidatesRes.json();
-      const employers: Employer[] = await employersRes.json();
-      const agencies: Agency[] = await agenciesRes.json();
+      const candidatesData = await candidatesRes.json();
+      const employersData = await employersRes.json();
+      const agenciesData = await agenciesRes.json();
+
+      // Extract the array of candidates/employers/agencies from the response
+      // Check if the response is an object with a 'candidates' property or directly an array
+      const candidates: Candidate[] = Array.isArray(candidatesData) 
+        ? candidatesData 
+        : candidatesData.candidates || candidatesData.data || [];
+      
+      const employers: Employer[] = Array.isArray(employersData)
+        ? employersData
+        : employersData.employers || employersData.data || [];
+      
+      const agencies: Agency[] = Array.isArray(agenciesData)
+        ? agenciesData
+        : agenciesData.agencies || agenciesData.data || [];
+
+      // Log for debugging
+      console.log('Candidates data structure:', candidatesData);
+      console.log('Candidates extracted:', candidates);
 
       // Calculate statistics
       const oneWeekAgo = new Date();
@@ -148,16 +166,34 @@ export default function AdminDashboard() {
         totalCandidates: candidates.length,
         totalEmployers: employers.length,
         totalAgencies: agencies.length,
-        pendingCandidates: candidates.filter(c => c.status === 'pending').length,
-        pendingEmployers: employers.filter(e => e.status === 'pending').length,
-        pendingAgencies: agencies.filter(a => a.status === 'pending').length,
-        approvedCandidates: candidates.filter(c => c.status === 'approved').length,
-        approvedEmployers: employers.filter(e => e.status === 'approved').length,
-        approvedAgencies: agencies.filter(a => a.status === 'approved').length,
+        pendingCandidates: candidates.filter((c: Candidate) => c.status === 'pending').length,
+        pendingEmployers: employers.filter((e: Employer) => e.status === 'pending').length,
+        pendingAgencies: agencies.filter((a: Agency) => a.status === 'pending').length,
+        approvedCandidates: candidates.filter((c: Candidate) => c.status === 'approved').length,
+        approvedEmployers: employers.filter((e: Employer) => e.status === 'approved').length,
+        approvedAgencies: agencies.filter((a: Agency) => a.status === 'approved').length,
         newThisWeek: {
-          candidates: candidates.filter(c => new Date(c.createdAt) > oneWeekAgo).length,
-          employers: employers.filter(e => new Date(e.createdAt) > oneWeekAgo).length,
-          agencies: agencies.filter(a => new Date(a.createdAt) > oneWeekAgo).length,
+          candidates: candidates.filter((c: Candidate) => {
+            try {
+              return new Date(c.createdAt) > oneWeekAgo;
+            } catch {
+              return false;
+            }
+          }).length,
+          employers: employers.filter((e: Employer) => {
+            try {
+              return new Date(e.createdAt) > oneWeekAgo;
+            } catch {
+              return false;
+            }
+          }).length,
+          agencies: agencies.filter((a: Agency) => {
+            try {
+              return new Date(a.createdAt) > oneWeekAgo;
+            } catch {
+              return false;
+            }
+          }).length,
         }
       };
 

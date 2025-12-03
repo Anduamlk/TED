@@ -743,14 +743,14 @@ export default function EmployerRegistrationPage() {
 	};
 
 	return (
-		<main className="w-full min-h-screen flex flex-col">
+		<main className="w-full min-h-screen flex flex-col pt-30">
 			<Header language={language} onLanguageChange={setLanguage} onSignupClick={() => {}} />
 
 			<div className="flex-grow py-8 md:py-12">
 				<div className="max-w-2xl mx-auto px-4">
 					{/* Header */}
 					<div className="mb-8">
-						<h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">{t.title}</h1>
+						<h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{t.title}</h1>
 						<p className="text-muted-foreground">{t.subtitle}</p>
 					</div>
 

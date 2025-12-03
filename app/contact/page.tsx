@@ -14,7 +14,7 @@ export default function ContactPage() {
   const [isSignupOpen, setIsSignupOpen] = useState(false)
 
   return (
-    <main className="w-full">
+    <main className="w-full py-30">
       {/* Header */}
       <Header
         language={language}
@@ -22,7 +22,7 @@ export default function ContactPage() {
         onSignupClick={() => setIsSignupOpen(true)}
       />
 <section
-  className="relative bg-cover bg-center bg-no-repeat py-20 md:py-28"
+  className="relative bg-cover bg-center bg-no-repeat py-35 md:py-28"
 >
 
 
@@ -31,7 +31,7 @@ export default function ContactPage() {
 
       {/* Left: Get in Touch Text */}
       <div className="text-gray-800 flex flex-col justify-center">
-        <h3 className="text-3xl md:text-4xl font-bold mb-4">
+        <h3 className="text-4xl md:text-5xl font-bold text-foreground mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
          Reach Out Today
         </h3>
         <p className="text-lg md:text-xl leading-relaxed text-gray-700">

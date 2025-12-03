@@ -35,7 +35,7 @@ const translations = {
     agency: "Active Agency Partners",
     employer: "Job Orders Processed",
     reach: "Global Reach",
-    getInvolved: "Get Started with AFA RAMS",
+    getInvolved: "Get Started with TEDBEER",
   },
 }
 
@@ -88,10 +88,10 @@ export default function WhatWeDoPage() {
     <main className="w-full">
       <Header language={language} onLanguageChange={setLanguage} onSignupClick={() => setIsSignupOpen(true)} />
 
-      <div className="min-h-screen bg-background pt-20 pb-20">
+      <div className="min-h-screen bg-background pt-35 pb-20">
         <div className="bg-gradient-to-b from-primary/10 to-transparent py-12 mb-16">
           <div className="max-w-4xl mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-2">{t.title}</h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{t.title}</h1>
             <p className="text-xl text-muted-foreground">{t.subtitle}</p>
           </div>
         </div>

@@ -14,11 +14,11 @@ type AboutPageProps = {}
 
 const translations = {
   en: {
-    title: "About AFA RAMS",
+    title: "About TEDBEER",
     subtitle: "Supporting Recruitment Agencies Since 2020",
     history: "Our History",
     historyContent:
-      "The AFA Recruitment Agency Management System (RAMS) was launched in 2020 to streamline the recruitment process for foreign employment agencies in Ethiopia. By centralizing key processes, it ensures efficient management of candidate registrations, job orders, visa processing, and travel logistics.",
+      "The TEDBEER Recruitment Agency Management System (RAMS) was launched in 2020 to streamline the recruitment process for foreign employment agencies in Ethiopia. By centralizing key processes, it ensures efficient management of candidate registrations, job orders, visa processing, and travel logistics.",
     mission: "Our Mission",
     missionContent:
       "To empower Ethiopian recruitment agencies through technology, improving operational efficiency, compliance, and transparency in the foreign employment lifecycle.",
@@ -34,7 +34,7 @@ const translations = {
     getInvolved: "Get Started",
   },
   am: {
-    title: "ስለ RAMS",
+    title: "ስለ TEDBEER",
     subtitle: "ከ2023 ጀምሮ ለተቋቋሚ የስራ ማህበረሰቦች እንደ መንገድ ስር ያገለግላል",
     history: "ታሪካችን",
     historyContent:
@@ -72,10 +72,10 @@ export default function AboutPage() {
     <main className="w-full">
       <Header language={language} onLanguageChange={setLanguage} onSignupClick={() => setIsSignupOpen(true)} />
 
-      <div className="min-h-screen bg-background pt-20 pb-20">
+      <div className="min-h-screen bg-background pt-35 pb-20">
         <div className="bg-gradient-to-b from-primary/10 to-transparent py-12 mb-16">
           <div className="max-w-4xl mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-2">{t.title}</h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{t.title}</h1>
             <p className="text-xl text-muted-foreground">{t.subtitle}</p>
           </div>
         </div>

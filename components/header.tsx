@@ -240,36 +240,42 @@ export function Header({ language, onLanguageChange, onSignupClick }: HeaderProp
               </select>
             </div>
 
-            {/* Desktop Auth Buttons */}
-            <div className="hidden sm:flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                className={`
-                  transition-all duration-300
-                  ${isScrolled 
-                    ? "text-gray-600 hover:text-blue-600 hover:bg-blue-50" 
-                    : "text-blue-100 hover:text-white hover:bg-white/10"
-                  }
-                `}
-                onClick={() => router.push("/login")}
-              >
-                {t.login}
-              </Button>
-              <Button 
-                onClick={() => router.push("/signup-selection")} 
-                className={`
-                  transition-all duration-500 hover:shadow-xl hover:-translate-y-0.5
-                  ${isScrolled 
-                    ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md" 
-                    : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
-                  }
-                `}
-              >
-                <span className="relative z-10">{t.signup}</span>
-                {/* Button glow effect */}
-                <span className="absolute inset-0 bg-blue-400/30 blur-md rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></span>
-              </Button>
-            </div>
+{/* Desktop Auth Buttons */}
+<div className="hidden sm:flex items-center gap-3">
+  <Button 
+    variant="ghost" 
+    className={`
+      transition-all duration-300
+      ${isScrolled 
+        ? "text-gray-600 hover:text-blue-600 hover:bg-blue-50" 
+        : "text-blue-100 hover:text-white hover:bg-white/10"
+      }
+    `}
+    onClick={() => {
+      console.log("Login button clicked, navigating to /login");
+      router.push("/login");
+    }}
+  >
+    {t.login}
+  </Button>
+  <Button 
+    onClick={() => {
+      console.log("Signup button clicked, navigating to /signup-selection");
+      router.push("/signup-selection");
+    }} 
+    className={`
+      group relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-0.5
+      ${isScrolled 
+        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md" 
+        : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
+      }
+    `}
+  >
+    <span className="relative z-10">{t.signup}</span>
+    {/* Button glow effect */}
+    <span className="absolute inset-0 bg-blue-400/30 blur-md rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></span>
+  </Button>
+</div>
 
             {/* Mobile Menu Button */}
             <button

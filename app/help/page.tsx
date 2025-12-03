@@ -57,7 +57,7 @@ const translations: { [key: string]: Translation } = {
     phone: "Phone",
     address: "Address",
     hours: "Office Hours",
-    emailAddr: "info@rams.org.et",
+    emailAddr: "info@tedbeer.et",
     phoneNum: "+251-11-123-4567",
     officeAddr: "Addis Ababa, Ethiopia",
     officeHours: "Monday - Friday, 9 AM - 5 PM",
@@ -90,10 +90,10 @@ export default function HelpPage() {
     <main className="w-full">
       <Header language={language} onLanguageChange={setLanguage} onSignupClick={() => setIsSignupOpen(true)} />
 
-      <div className="min-h-screen bg-background pt-20 pb-20">
+      <div className="min-h-screen bg-background pt-35 pb-20">
         <div className="max-w-4xl mx-auto px-4">
           {/* Page Title */}
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-12 text-center">{t.title}</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent text-center">{t.title}</h1>
 
           {/* FAQ Section */}
           <section id="faq" className="mb-20 scroll-mt-20">

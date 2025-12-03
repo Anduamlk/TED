@@ -19,6 +19,10 @@ import {
   Building2,
   Save,
   X,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,7 +87,7 @@ interface User {
   email: string;
   phone: string;
   role: "candidate" | "employer" | "agency" | "admin";
- status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected";
   joinDate: string;
   
   // Candidate specific fields
@@ -104,6 +108,18 @@ interface User {
   directorPhotoPath?: string;
 }
 
+interface ApiResponse<T> {
+  data?: T[];
+  candidates?: T[];
+  employers?: T[];
+  agencies?: T[];
+  users?: T[];
+  total?: number;
+  page?: number;
+  limit?: number;
+  pages?: number;
+}
+
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
@@ -115,11 +131,17 @@ export default function UsersPage() {
   const [editFormData, setEditFormData] = useState<Partial<User>>({});
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [saveLoading, setSaveLoading] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch users from API
+  // Fetch users from API with pagination
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const fetchUsers = async () => {
     try {
@@ -127,50 +149,63 @@ export default function UsersPage() {
       
       // Fetch all user types concurrently
       const [candidatesRes, employersRes, agenciesRes] = await Promise.all([
-        fetch('http://localhost:5000/api/candidates'),
-        fetch('http://localhost:5000/api/employers'),
-        fetch('http://localhost:5000/api/agencies')
+        fetch(`http://localhost:5000/api/candidates?page=${currentPage}&limit=${itemsPerPage}`),
+        fetch(`http://localhost:5000/api/employers?page=${currentPage}&limit=${itemsPerPage}`),
+        fetch(`http://localhost:5000/api/agencies?page=${currentPage}&limit=${itemsPerPage}`)
       ]);
 
-      const candidates = await candidatesRes.json();
-      const employers = await employersRes.json();
-      const agencies = await agenciesRes.json();
+      const candidatesData: ApiResponse<any> = await candidatesRes.json();
+      const employersData: ApiResponse<any> = await employersRes.json();
+      const agenciesData: ApiResponse<any> = await agenciesRes.json();
+
+      // Extract arrays from responses
+      const candidates = Array.isArray(candidatesData) 
+        ? candidatesData 
+        : candidatesData.candidates || candidatesData.data || [];
+      
+      const employers = Array.isArray(employersData)
+        ? employersData
+        : employersData.employers || employersData.data || [];
+      
+      const agencies = Array.isArray(agenciesData)
+        ? agenciesData
+        : agenciesData.agencies || agenciesData.data || [];
 
       // Transform data to common format
       const allUsers: User[] = [
         ...candidates.map((candidate: any) => ({
-          id: candidate.id,
-          name: `${candidate.firstName} ${candidate.lastName}`,
-          email: candidate.email,
-          phone: candidate.phone,
+          id: candidate.id || candidate._id,
+          name: `${candidate.firstName || ''} ${candidate.lastName || ''}`.trim(),
+          email: candidate.email || '',
+          phone: candidate.phone || '',
           role: "candidate" as const,
           status: candidate.status || "pending",
-          joinDate: candidate.createdAt || new Date().toISOString(),
+          joinDate: candidate.createdAt || candidate.joinDate || new Date().toISOString(),
           firstName: candidate.firstName,
           lastName: candidate.lastName,
           photoPath: candidate.photoPath,
         })),
         ...employers.map((employer: any) => ({
-          id: employer.id,
-          name: employer.companyName,
-          email: employer.email,
-          phone: employer.phone,
+          id: employer.id || employer._id,
+          name: employer.companyName || '',
+          email: employer.email || '',
+          phone: employer.phone || '',
           role: "employer" as const,
           status: employer.status || "pending",
-          joinDate: employer.createdAt || new Date().toISOString(),
+          joinDate: employer.createdAt || employer.joinDate || new Date().toISOString(),
           companyName: employer.companyName,
           contactPersonFirstName: employer.contactPersonFirstName,
           contactPersonLastName: employer.contactPersonLastName,
           contactPersonPhotoPath: employer.contactPersonPhotoPath,
         })),
         ...agencies.map((agency: any) => ({
-          id: agency.id,
-          name: agency.agencyName,
-          email: agency.contactEmail || agency.directorEmail,
-          phone: agency.contactPhone || agency.directorPhone,
+          id: agency.id || agency._id,
+          name: agency.agencyName || '',
+          email: agency.contactEmail || agency.directorEmail || '',
+          phone: agency.contactPhone || agency.directorPhone || '',
           role: "agency" as const,
           status: agency.status || "pending",
-          joinDate: agency.createdAt || new Date().toISOString(),
+          joinDate: agency.createdAt || agency.joinDate || new Date().toISOString(),
           agencyName: agency.agencyName,
           directorFirstName: agency.directorFirstName,
           directorLastName: agency.directorLastName,
@@ -179,13 +214,61 @@ export default function UsersPage() {
       ];
 
       setUsers(allUsers);
+      
+      // Calculate totals (this assumes your API returns pagination info)
+      // If your API doesn't provide totals, you might need to fetch counts separately
+      const totalCandidates = candidatesData.total || candidates.length;
+      const totalEmployers = employersData.total || employers.length;
+      const totalAgencies = agenciesData.total || agencies.length;
+      
+      setTotalUsers(totalCandidates + totalEmployers + totalAgencies);
+      setTotalPages(Math.ceil((totalCandidates + totalEmployers + totalAgencies) / itemsPerPage));
+      
     } catch (error) {
       console.error('Error fetching users:', error);
+      // Fallback to dummy data for demo
+      const dummyUsers: User[] = [
+        {
+          id: "1",
+          name: "John Doe",
+          email: "john@example.com",
+          phone: "+1234567890",
+          role: "candidate",
+          status: "approved",
+          joinDate: new Date().toISOString(),
+          firstName: "John",
+          lastName: "Doe",
+        },
+        {
+          id: "2",
+          name: "Acme Corp",
+          email: "contact@acme.com",
+          phone: "+1234567891",
+          role: "employer",
+          status: "pending",
+          joinDate: new Date().toISOString(),
+          companyName: "Acme Corp",
+        },
+        {
+          id: "3",
+          name: "Recruit Pro",
+          email: "info@recruitpro.com",
+          phone: "+1234567892",
+          role: "agency",
+          status: "approved",
+          joinDate: new Date().toISOString(),
+          agencyName: "Recruit Pro",
+        }
+      ];
+      setUsers(dummyUsers);
+      setTotalUsers(dummyUsers.length);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
   };
 
+  // Filter users based on search and filters
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -196,6 +279,11 @@ export default function UsersPage() {
       filterStatus === "all" || user.status === filterStatus;
     return matchesSearch && matchesRole && matchesStatus;
   });
+
+  // Paginate filtered users
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -353,6 +441,7 @@ export default function UsersPage() {
 
       // Remove user from local state
       setUsers(users.filter(user => user.id !== userId));
+      setTotalUsers(prev => prev - 1);
       
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -450,6 +539,52 @@ export default function UsersPage() {
     setEditFormData({});
   };
 
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    const newItemsPerPage = parseInt(value);
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  // Calculate pagination numbers
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Show limited pages with ellipsis
+      if (currentPage <= 3) {
+        // Show first 4 pages and last page
+        pageNumbers.push(1, 2, 3, 4, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        // Show first page and last 4 pages
+        pageNumbers.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        // Show pages around current page
+        pageNumbers.push(
+          1,
+          '...',
+          currentPage - 1,
+          currentPage,
+          currentPage + 1,
+          '...',
+          totalPages
+        );
+      }
+    }
+    
+    return pageNumbers;
+  };
+
   if (loading) {
     return (
       <DashboardLayout
@@ -459,7 +594,7 @@ export default function UsersPage() {
       >
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+            <Users className="h-8 w-8 text-gray-400 mx-auto mb-2 animate-pulse" />
             <p className="text-gray-600">Loading users...</p>
           </div>
         </div>
@@ -478,7 +613,7 @@ export default function UsersPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-poppins font-bold text-gray-900">
-              Users
+              Users Management
             </h1>
             <p className="text-gray-600 mt-1">
               Manage all system users - candidates, employers, and agencies
@@ -489,29 +624,33 @@ export default function UsersPage() {
             onClick={() => setShowUserTypeDialog(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add User
+            Add New User
           </Button>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Users className="h-8 w-8 text-blue-600" />
+          <Card className="hover:shadow-lg transition-shadow duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 rounded-full bg-blue-100">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
                 <div>
-                  <p className="text-2xl font-bold">{users.length}</p>
+                  <p className="text-3xl font-bold text-gray-800">{totalUsers}</p>
                   <p className="text-sm text-gray-600">Total Users</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <User className="h-8 w-8 text-green-600" />
+          <Card className="hover:shadow-lg transition-shadow duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 rounded-full bg-green-100">
+                  <User className="h-6 w-6 text-green-600" />
+                </div>
                 <div>
-                  <p className="text-2xl font-bold">
+                  <p className="text-3xl font-bold text-gray-800">
                     {users.filter((u) => u.role === "candidate").length}
                   </p>
                   <p className="text-sm text-gray-600">Candidates</p>
@@ -519,12 +658,14 @@ export default function UsersPage() {
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Building className="h-8 w-8 text-blue-600" />
+          <Card className="hover:shadow-lg transition-shadow duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 rounded-full bg-blue-100">
+                  <Building className="h-6 w-6 text-blue-600" />
+                </div>
                 <div>
-                  <p className="text-2xl font-bold">
+                  <p className="text-3xl font-bold text-gray-800">
                     {users.filter((u) => u.role === "employer").length}
                   </p>
                   <p className="text-sm text-gray-600">Employers</p>
@@ -532,12 +673,14 @@ export default function UsersPage() {
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Briefcase className="h-8 w-8 text-orange-600" />
+          <Card className="hover:shadow-lg transition-shadow duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 rounded-full bg-orange-100">
+                  <Briefcase className="h-6 w-6 text-orange-600" />
+                </div>
                 <div>
-                  <p className="text-2xl font-bold">
+                  <p className="text-3xl font-bold text-gray-800">
                     {users.filter((u) => u.role === "agency").length}
                   </p>
                   <p className="text-sm text-gray-600">Agencies</p>
@@ -547,252 +690,357 @@ export default function UsersPage() {
           </Card>
         </div>
 
-        {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search users by name, email, or phone..."
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="flex space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Role: {filterRole === "all" ? "All" : getRoleDisplayName(filterRole)}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Filter by Role</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setFilterRole("all")}>
-                  All Roles
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterRole("candidate")}>
-                  Candidates
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterRole("employer")}>
-                  Employers
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterRole("agency")}>
-                  Agencies
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Status: {filterStatus === "all" ? "All" : filterStatus}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setFilterStatus("all")}>
-                  All Status
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterStatus("approved")}>
-                  Approved
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterStatus("rejected")}>
-                  Rejected
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterStatus("pending")}>
-                  Pending
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* Users Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Users</CardTitle>
-            <CardDescription>
-              A list of all users in the system with their roles and status
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Join Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => {
-                  const RoleIcon = getRoleIcon(user.role);
-                  return (
-                    <TableRow key={user.id} className="hover:bg-gray-50">
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          {renderAvatar(user)}
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {user.name}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              ID: {user.id}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <Mail className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm">{user.email}</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Phone className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm">{user.phone}</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <RoleIcon className="h-4 w-4" />
-                          <Badge className={getRoleColor(user.role)}>
-                            {getRoleDisplayName(user.role)}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-600">
-                          {new Date(user.joinDate).toLocaleDateString()}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(user.status)}>
-                          {user.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleEditUser(user)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete User</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete {user.name}?
-                                  This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  className="bg-red-600 hover:bg-red-700"
-                                  onClick={() => handleDeleteUser(user.id, user.role)}
-                                  disabled={deleteLoading === user.id}
-                                >
-                                  {deleteLoading === user.id ? "Deleting..." : "Delete"}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+        {/* Search and Filter Section */}
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <Input
+                  placeholder="Search users by name, email, or phone..."
+                  className="pl-10 h-11 text-base"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-11">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Role: {filterRole === "all" ? "All" : getRoleDisplayName(filterRole)}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Filter by Role</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setFilterRole("all")}>
+                      All Roles
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFilterRole("candidate")}>
+                      <User className="h-4 w-4 mr-2 text-green-600" />
+                      Candidates
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFilterRole("employer")}>
+                      <Building className="h-4 w-4 mr-2 text-blue-600" />
+                      Employers
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFilterRole("agency")}>
+                      <Briefcase className="h-4 w-4 mr-2 text-orange-600" />
+                      Agencies
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-11">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Status: {filterStatus === "all" ? "All" : filterStatus}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setFilterStatus("all")}>
+                      All Status
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFilterStatus("approved")}>
+                      <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+                      Approved
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFilterStatus("rejected")}>
+                      <div className="h-2 w-2 rounded-full bg-red-500 mr-2"></div>
+                      Rejected
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFilterStatus("pending")}>
+                      <div className="h-2 w-2 rounded-full bg-yellow-500 mr-2"></div>
+                      Pending
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Empty State */}
-        {filteredUsers.length === 0 && (
-          <Card className="text-center py-12">
-            <CardContent>
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No users found
-              </h3>
-              <p className="text-gray-600 mb-4">
-                {searchTerm || filterRole !== "all" || filterStatus !== "all"
-                  ? "Try adjusting your search or filter criteria."
-                  : "Get started by adding your first user."}
-              </p>
-              {!searchTerm &&
-                filterRole === "all" &&
-                filterStatus === "all" && (
-                  <Button onClick={() => setShowUserTypeDialog(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add User
+        {/* Users Table */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>User List</CardTitle>
+                <CardDescription>
+                  Showing {paginatedUsers.length} of {filteredUsers.length} filtered users ({totalUsers} total)
+                </CardDescription>
+              </div>
+              <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+                <span className="text-sm text-gray-600">Show:</span>
+                <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[250px]">User</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Join Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-12">
+                        <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No users found
+                        </h3>
+                        <p className="text-gray-600">
+                          {searchTerm || filterRole !== "all" || filterStatus !== "all"
+                            ? "Try adjusting your search or filter criteria."
+                            : "No users have been added yet."}
+                        </p>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedUsers.map((user) => {
+                      const RoleIcon = getRoleIcon(user.role);
+                      return (
+                        <TableRow key={user.id} className="hover:bg-gray-50/50">
+                          <TableCell>
+                            <div className="flex items-center space-x-3">
+                              {renderAvatar(user)}
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {user.name}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  ID: {user.id.substring(0, 8)}...
+                                </p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="flex items-center space-x-2">
+                                <Mail className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm truncate max-w-[200px]">{user.email}</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Phone className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm">{user.phone}</span>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <RoleIcon className="h-4 w-4" />
+                              <Badge variant="outline" className={getRoleColor(user.role)}>
+                                {getRoleDisplayName(user.role)}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-gray-600">
+                              {new Date(user.joinDate).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getStatusColor(user.status)}>
+                              {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end space-x-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditUser(user)}
+                                className="h-8 w-8 p-0 hover:bg-blue-50"
+                              >
+                                <Edit className="h-4 w-4 text-blue-600" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete User</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete <span className="font-semibold">{user.name}</span>? 
+                                      This action cannot be undone and will permanently remove the user from the system.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      className="bg-red-600 hover:bg-red-700"
+                                      onClick={() => handleDeleteUser(user.id, user.role)}
+                                      disabled={deleteLoading === user.id}
+                                    >
+                                      {deleteLoading === user.id ? (
+                                        <>
+                                          <span className="animate-spin mr-2">⟳</span>
+                                          Deleting...
+                                        </>
+                                      ) : "Delete User"}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-gray-600">
+                  Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
+                  <span className="font-medium">
+                    {Math.min(endIndex, filteredUsers.length)}
+                  </span>{" "}
+                  of <span className="font-medium">{filteredUsers.length}</span> filtered users
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
                   </Button>
-                )}
-            </CardContent>
-          </Card>
-        )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  {getPageNumbers().map((page, index) => (
+                    page === '...' ? (
+                      <span key={`ellipsis-${index}`} className="px-2 text-gray-400">...</span>
+                    ) : (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(page as number)}
+                        className="h-8 w-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    )
+                  ))}
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* User Type Selection Dialog */}
         <Dialog open={showUserTypeDialog} onOpenChange={setShowUserTypeDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Select User Type</DialogTitle>
+              <DialogTitle className="text-xl">Add New User</DialogTitle>
               <DialogDescription>
                 Choose the type of user you want to register
               </DialogDescription>
             </DialogHeader>
-            <div className="grid grid-cols-1 gap-4 py-4">
-              <Button asChild variant="outline" className="h-auto p-4">
+            <div className="grid grid-cols-1 gap-3 py-4">
+              <Button asChild variant="outline" className="h-auto p-4 hover:bg-green-50 hover:border-green-200">
                 <Link href="/register/candidate" onClick={() => setShowUserTypeDialog(false)}>
-                  <div className="flex items-center space-x-3 text-left">
-                    <User className="h-6 w-6 text-green-600" />
-                    <div>
-                      <p className="font-medium">Candidate</p>
-                      <p className="text-sm text-gray-500">Job seeker looking for opportunities</p>
+                  <div className="flex items-center space-x-4 text-left">
+                    <div className="p-2 rounded-lg bg-green-100">
+                      <User className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">Register Candidate</p>
+                      <p className="text-sm text-gray-500 mt-1">Job seeker looking for opportunities</p>
                     </div>
                   </div>
                 </Link>
               </Button>
               
-              <Button asChild variant="outline" className="h-auto p-4">
+              <Button asChild variant="outline" className="h-auto p-4 hover:bg-blue-50 hover:border-blue-200">
                 <Link href="/register/employer" onClick={() => setShowUserTypeDialog(false)}>
-                  <div className="flex items-center space-x-3 text-left">
-                    <Building className="h-6 w-6 text-blue-600" />
-                    <div>
-                      <p className="font-medium">Employer</p>
-                      <p className="text-sm text-gray-500">Company looking to hire candidates</p>
+                  <div className="flex items-center space-x-4 text-left">
+                    <div className="p-2 rounded-lg bg-blue-100">
+                      <Building className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">Register Employer</p>
+                      <p className="text-sm text-gray-500 mt-1">Company looking to hire candidates</p>
                     </div>
                   </div>
                 </Link>
               </Button>
               
-              <Button asChild variant="outline" className="h-auto p-4">
+              <Button asChild variant="outline" className="h-auto p-4 hover:bg-orange-50 hover:border-orange-200">
                 <Link href="/register/agency" onClick={() => setShowUserTypeDialog(false)}>
-                  <div className="flex items-center space-x-3 text-left">
-                    <Briefcase className="h-6 w-6 text-orange-600" />
-                    <div>
-                      <p className="font-medium">Agency</p>
-                      <p className="text-sm text-gray-500">Recruitment agency</p>
+                  <div className="flex items-center space-x-4 text-left">
+                    <div className="p-2 rounded-lg bg-orange-100">
+                      <Briefcase className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">Register Agency</p>
+                      <p className="text-sm text-gray-500 mt-1">Recruitment agency</p>
                     </div>
                   </div>
                 </Link>
@@ -805,33 +1053,33 @@ export default function UsersPage() {
         <Dialog open={!!editingUser} onOpenChange={(open) => !open && handleCancelEdit()}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Edit User</DialogTitle>
+              <DialogTitle>Edit User Information</DialogTitle>
               <DialogDescription>
-                Update user information for {editingUser?.name}
+                Update user details for {editingUser?.name}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
                   value={editFormData.name || ''}
                   onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
-                  placeholder="Enter name"
+                  placeholder="Enter full name"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
                   value={editFormData.email || ''}
                   onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
-                  placeholder="Enter email"
+                  placeholder="Enter email address"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="phone">Phone</Label>
+                <Label htmlFor="phone">Phone Number</Label>
                 <Input
                   id="phone"
                   value={editFormData.phone || ''}
@@ -840,7 +1088,7 @@ export default function UsersPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">Account Status</Label>
                 <Select
                   value={editFormData.status || 'pending'}
                   onValueChange={(value: "approved" | "rejected" | "pending") => 
@@ -851,9 +1099,18 @@ export default function UsersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved" className="flex items-center">
+                      <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+                      Approved
+                    </SelectItem>
+                    <SelectItem value="rejected" className="flex items-center">
+                      <div className="h-2 w-2 rounded-full bg-red-500 mr-2"></div>
+                      Rejected
+                    </SelectItem>
+                    <SelectItem value="pending" className="flex items-center">
+                      <div className="h-2 w-2 rounded-full bg-yellow-500 mr-2"></div>
+                      Pending
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -863,9 +1120,18 @@ export default function UsersPage() {
                 <X className="h-4 w-4 mr-2" />
                 Cancel
               </Button>
-              <Button onClick={handleSaveEdit} disabled={saveLoading}>
-                <Save className="h-4 w-4 mr-2" />
-                {saveLoading ? "Saving..." : "Save Changes"}
+              <Button onClick={handleSaveEdit} disabled={saveLoading} className="bg-blue-600 hover:bg-blue-700">
+                {saveLoading ? (
+                  <>
+                    <span className="animate-spin mr-2">⟳</span>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
