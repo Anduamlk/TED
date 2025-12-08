@@ -7,12 +7,12 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Recruitment Agency Management System",
+  title: " TEDBEER Recruitment System",
   description: "Streamline overseas employment operations for Ethiopian recruitment agencies...",
   generator: "ProAll22 developed according to UniTech IT specifications",
   keywords: "RAMS, recruitment system, overseas employment, job placement, visa processing, agency management, Ethiopia",
   openGraph: {
-    title: "Recruitment Agency Management System (RAMS)",
+    title: "TEDBEER Recruitment Agency Management System",
     description: "Empowering Ethiopian recruitment agencies through digital automation of candidate, employer, and visa management workflows.",
     type: "website",
   },

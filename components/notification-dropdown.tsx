@@ -83,12 +83,47 @@ const getRoleIcon = (role: string) => {
   }
 };
 
+// Helper function to safely extract array from response
+const extractArrayFromResponse = (data: any): any[] => {
+  // If data is already an array, return it
+  if (Array.isArray(data)) {
+    return data;
+  }
+  
+  // If data has a results or data property that is an array
+  if (data && typeof data === 'object') {
+    if (Array.isArray(data.results)) {
+      return data.results;
+    }
+    if (Array.isArray(data.data)) {
+      return data.data;
+    }
+    if (Array.isArray(data.users)) {
+      return data.users;
+    }
+    if (Array.isArray(data.candidates)) {
+      return data.candidates;
+    }
+    if (Array.isArray(data.employers)) {
+      return data.employers;
+    }
+    if (Array.isArray(data.agencies)) {
+      return data.agencies;
+    }
+  }
+  
+  // If we can't find an array, return empty array
+  console.warn('Could not extract array from response:', data);
+  return [];
+};
+
 export default function NotificationDropdown({
   userRole,
 }: NotificationDropdownProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   // Fetch real notifications from API
@@ -96,6 +131,7 @@ export default function NotificationDropdown({
     const fetchNotifications = async () => {
       try {
         setLoading(true);
+        setError(null);
         
         // Fetch all user types concurrently
         const [candidatesRes, employersRes, agenciesRes] = await Promise.all([
@@ -104,45 +140,62 @@ export default function NotificationDropdown({
           fetch('http://localhost:5000/api/agencies')
         ]);
 
-        const candidates = await candidatesRes.json();
-        const employers = await employersRes.json();
-        const agencies = await agenciesRes.json();
+        // Check if responses are OK
+        if (!candidatesRes.ok || !employersRes.ok || !agenciesRes.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+
+        const candidatesData = await candidatesRes.json();
+        const employersData = await employersRes.json();
+        const agenciesData = await agenciesRes.json();
+
+        // Extract arrays safely from responses
+        const candidates = extractArrayFromResponse(candidatesData);
+        const employers = extractArrayFromResponse(employersData);
+        const agencies = extractArrayFromResponse(agenciesData);
+
+        // Log for debugging
+        console.log('Fetched data:', {
+          candidatesCount: candidates.length,
+          employersCount: employers.length,
+          agenciesCount: agencies.length
+        });
 
         // Combine all users and sort by creation date (newest first)
         const allUsers: User[] = [
           ...candidates.map((candidate: any) => ({
-            id: candidate.id,
-            name: `${candidate.firstName} ${candidate.lastName}`,
-            firstName: candidate.firstName,
-            lastName: candidate.lastName,
-            email: candidate.email,
-            phone: candidate.phone,
+            id: candidate.id || candidate._id || `candidate-${Date.now()}`,
+            name: `${candidate.firstName || ''} ${candidate.lastName || ''}`.trim() || 'Unknown Candidate',
+            firstName: candidate.firstName || '',
+            lastName: candidate.lastName || '',
+            email: candidate.email || 'No email',
+            phone: candidate.phone || 'No phone',
             role: "candidate" as const,
-            status: candidate.status || "pending",
-            joinDate: candidate.createdAt || new Date().toISOString(),
-            createdAt: candidate.createdAt,
+            status: (candidate.status || "pending") as "active" | "inactive" | "pending",
+            joinDate: candidate.createdAt || candidate.joinDate || new Date().toISOString(),
+            createdAt: candidate.createdAt || candidate.joinDate || new Date().toISOString(),
           })),
           ...employers.map((employer: any) => ({
-            id: employer.id,
-            name: employer.companyName,
-            email: employer.email,
-            phone: employer.phone,
+            id: employer.id || employer._id || `employer-${Date.now()}`,
+            name: employer.companyName || employer.name || 'Unknown Company',
+            email: employer.email || employer.contactEmail || 'No email',
+            phone: employer.phone || employer.contactPhone || 'No phone',
             role: "employer" as const,
-            status: employer.status || "pending",
-            joinDate: employer.createdAt || new Date().toISOString(),
-            companyName: employer.companyName,
-            createdAt: employer.createdAt,
+            status: (employer.status || "pending") as "active" | "inactive" | "pending",
+            joinDate: employer.createdAt || employer.joinDate || new Date().toISOString(),
+            companyName: employer.companyName || employer.name,
+            createdAt: employer.createdAt || employer.joinDate || new Date().toISOString(),
           })),
           ...agencies.map((agency: any) => ({
-            id: agency.id,
-            name: agency.agencyName,
-            email: agency.contactEmail || agency.directorEmail,
-            phone: agency.contactPhone || agency.directorPhone,
+            id: agency.id || agency._id || `agency-${Date.now()}`,
+            name: agency.agencyName || agency.name || 'Unknown Agency',
+            email: agency.contactEmail || agency.directorEmail || agency.email || 'No email',
+            phone: agency.contactPhone || agency.directorPhone || agency.phone || 'No phone',
             role: "agency" as const,
-            status: agency.status || "pending",
-            joinDate: agency.createdAt || new Date().toISOString(),
-            agencyName: agency.agencyName,
-            createdAt: agency.createdAt,
+            status: (agency.status || "pending") as "active" | "inactive" | "pending",
+            joinDate: agency.createdAt || agency.joinDate || new Date().toISOString(),
+            agencyName: agency.agencyName || agency.name,
+            createdAt: agency.createdAt || agency.joinDate || new Date().toISOString(),
           }))
         ];
 
@@ -153,13 +206,13 @@ export default function NotificationDropdown({
 
         // Convert users to notifications
         const userNotifications: Notification[] = recentUsers.map((user, index) => ({
-          id: `user-${user.id}`,
+          id: `user-${user.id}-${index}`,
           title: `New ${getRoleDisplayName(user.role)} Registration`,
           message: user.role === "candidate" 
             ? `${user.firstName} ${user.lastName} has registered as a candidate`
             : user.role === "employer"
-            ? `${user.companyName} has registered as an employer`
-            : `${user.agencyName} has registered as an agency`,
+            ? `${user.name} has registered as an employer`
+            : `${user.name} has registered as an agency`,
           type: "user_registration" as const,
           status: "unread" as const,
           date: user.createdAt,
@@ -195,6 +248,7 @@ export default function NotificationDropdown({
         setNotifications([...userNotifications, ...systemNotifications]);
       } catch (error) {
         console.error('Error fetching notifications:', error);
+        setError('Failed to load notifications');
         // Fallback to sample data if API fails
         setNotifications(getFallbackNotifications());
       } finally {
@@ -233,6 +287,17 @@ export default function NotificationDropdown({
         priority: "normal",
         actionUrl: "/dashboard/admin/users",
         userRole: "employer",
+      },
+      {
+        id: "user-003",
+        title: "New Agency Registration",
+        message: "Global Recruiters has registered as an agency",
+        type: "user_registration",
+        status: "unread",
+        date: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+        priority: "normal",
+        actionUrl: "/dashboard/admin/users",
+        userRole: "agency",
       },
     ];
   };
@@ -319,14 +384,22 @@ export default function NotificationDropdown({
   };
 
   const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return "Recently";
+      }
+      
+      const now = new Date();
+      const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+      
+      if (diffInSeconds < 60) return 'Just now';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+      return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    } catch (error) {
+      return "Recently";
+    }
   };
 
   return (
@@ -389,6 +462,12 @@ export default function NotificationDropdown({
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                   <p className="text-gray-500">Loading notifications...</p>
                 </div>
+              ) : error ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                  <p className="text-red-500 mb-2">{error}</p>
+                  <p className="text-gray-500 text-sm">Showing sample notifications</p>
+                </div>
               ) : notifications.length === 0 ? (
                 <div className="text-center py-8">
                   <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -436,7 +515,8 @@ export default function NotificationDropdown({
                             </h4>
                             <div className="flex items-center space-x-1 ml-2">
                               <Badge
-                                className={getPriorityColor(notification.priority)}
+                                variant="outline"
+                                className={`text-xs ${getPriorityColor(notification.priority)}`}
                               >
                                 {notification.priority}
                               </Badge>
